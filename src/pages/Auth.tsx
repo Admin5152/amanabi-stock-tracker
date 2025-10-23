@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
+import { Warehouse } from 'lucide-react';
 import { z } from 'zod';
 
 const loginSchema = z.object({
@@ -106,18 +107,18 @@ export default function Auth() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-secondary/50 via-background to-secondary/30 p-4">
-      <Card className="w-full max-w-md shadow-elevated">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-secondary/50 via-background to-secondary/30 p-4 animate-fade-in">
+      <Card className="w-full max-w-md border-2 border-transparent bg-gradient-to-br from-card to-card/80 shadow-glow transition-all hover:border-primary/20 animate-scale-in">
         <CardHeader className="space-y-1">
           <div className="mb-4 flex justify-center">
-            <div className="rounded-full bg-gradient-to-r from-primary to-accent p-3">
-              <div className="h-12 w-12 rounded-full bg-card"></div>
+            <div className="rounded-full bg-gradient-to-r from-primary to-accent p-3 shadow-glow animate-pulse">
+              <Warehouse className="h-12 w-12 text-white" />
             </div>
           </div>
-          <CardTitle className="text-center text-2xl font-bold">
+          <CardTitle className="text-center text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
             {isLogin ? 'Welcome Back' : 'Create Account'}
           </CardTitle>
-          <CardDescription className="text-center">
+          <CardDescription className="text-center text-base">
             {isLogin
               ? 'Sign in to access your warehouse management system'
               : 'Sign up to start managing your inventory'}
@@ -175,7 +176,7 @@ export default function Auth() {
             )}
             <Button
               type="submit"
-              className="w-full bg-gradient-to-r from-primary to-accent"
+              className="w-full bg-gradient-to-r from-primary to-accent shadow-lg transition-all hover:shadow-glow hover:scale-105"
               disabled={loading}
             >
               {loading ? 'Processing...' : isLogin ? 'Sign In' : 'Sign Up'}

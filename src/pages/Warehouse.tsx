@@ -160,22 +160,27 @@ export default function Warehouse() {
   const totalAvailableStock = items.reduce((acc, item) => acc + (item.available_stock || 0), 0);
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 animate-fade-in">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-lg bg-gradient-to-r from-primary/10 via-accent/10 to-primary/10 p-6 backdrop-blur-sm">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">{warehouseName} Warehouse</h1>
-          <p className="text-muted-foreground">Manage inventory and track weekly sales</p>
+          <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+            {warehouseName} Warehouse
+          </h1>
+          <p className="mt-1 text-muted-foreground">Manage inventory and track weekly sales</p>
         </div>
-        <Button onClick={addNewItem} className="gap-2">
+        <Button 
+          onClick={addNewItem} 
+          className="gap-2 bg-gradient-to-r from-primary to-accent shadow-lg transition-all hover:shadow-glow hover:scale-105"
+        >
           <Plus className="h-4 w-4" />
           Add Item
         </Button>
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
-        <Card>
+        <Card className="border-2 border-transparent bg-gradient-to-br from-card to-card/80 shadow-card transition-all hover:border-primary/20 hover:shadow-elevated">
           <CardHeader className="pb-3">
-            <Label htmlFor="week">Week Number</Label>
+            <Label htmlFor="week" className="text-sm font-semibold">Week Number</Label>
           </CardHeader>
           <CardContent>
             <Input
@@ -184,13 +189,14 @@ export default function Warehouse() {
               value={currentWeek}
               onChange={(e) => setCurrentWeek(parseInt(e.target.value) || 1)}
               min="1"
+              className="border-2 transition-all focus:border-primary"
             />
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-2 border-transparent bg-gradient-to-br from-card to-card/80 shadow-card transition-all hover:border-primary/20 hover:shadow-elevated">
           <CardHeader className="pb-3">
-            <Label htmlFor="date">Week Date</Label>
+            <Label htmlFor="date" className="text-sm font-semibold">Week Date</Label>
           </CardHeader>
           <CardContent>
             <Input
@@ -198,24 +204,27 @@ export default function Warehouse() {
               type="date"
               value={currentDate}
               onChange={(e) => setCurrentDate(e.target.value)}
+              className="border-2 transition-all focus:border-primary"
             />
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5 shadow-glow">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm">Total Available</CardTitle>
+            <CardTitle className="text-sm font-semibold">Total Available</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold text-primary">{totalAvailableStock}</p>
+            <p className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+              {totalAvailableStock}
+            </p>
           </CardContent>
         </Card>
       </div>
 
-      <Card className="shadow-card">
-        <CardHeader>
-          <CardTitle>Stock Items - Week {currentWeek}</CardTitle>
-          <CardDescription>
+      <Card className="overflow-hidden border-2 border-transparent bg-gradient-to-br from-card to-card/80 shadow-elevated transition-all hover:border-primary/10">
+        <CardHeader className="bg-gradient-to-r from-primary/5 to-accent/5 border-b-2 border-border/50">
+          <CardTitle className="text-xl">Stock Items - Week {currentWeek}</CardTitle>
+          <CardDescription className="text-base">
             {new Date(currentDate).toLocaleDateString('en-US', {
               weekday: 'long',
               year: 'numeric',
@@ -233,12 +242,12 @@ export default function Warehouse() {
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow className="bg-secondary/50">
-                    <TableHead className="font-semibold">Item Name</TableHead>
-                    <TableHead className="font-semibold">Previous Stock</TableHead>
-                    <TableHead className="font-semibold">Sold Out</TableHead>
-                    <TableHead className="font-semibold">Available Stock</TableHead>
-                    <TableHead className="font-semibold">Notes</TableHead>
+                  <TableRow className="bg-gradient-to-r from-primary/10 to-accent/10 border-b-2 border-primary/20">
+                    <TableHead className="font-bold text-foreground">Item Name</TableHead>
+                    <TableHead className="font-bold text-foreground">Previous Stock</TableHead>
+                    <TableHead className="font-bold text-foreground">Sold Out</TableHead>
+                    <TableHead className="font-bold text-foreground">Available Stock</TableHead>
+                    <TableHead className="font-bold text-foreground">Notes</TableHead>
                     <TableHead className="w-[80px]"></TableHead>
                   </TableRow>
                 </TableHeader>
@@ -253,7 +262,7 @@ export default function Warehouse() {
                     items.map((item, index) => (
                       <TableRow
                         key={item.id}
-                        className={index % 2 === 0 ? 'bg-secondary/20' : ''}
+                        className={`transition-all hover:bg-primary/5 ${index % 2 === 0 ? 'bg-secondary/20' : ''}`}
                       >
                         <TableCell>
                           <Input
@@ -311,11 +320,13 @@ export default function Warehouse() {
                     ))
                   )}
                   {items.length > 0 && (
-                    <TableRow className="bg-primary/5 font-semibold">
-                      <TableCell>Total</TableCell>
-                      <TableCell>{totalPreviousStock}</TableCell>
-                      <TableCell>{totalSoldOut}</TableCell>
-                      <TableCell className="text-primary">{totalAvailableStock}</TableCell>
+                    <TableRow className="border-t-2 border-primary/20 bg-gradient-to-r from-primary/10 to-accent/10 font-bold">
+                      <TableCell className="text-base">Total</TableCell>
+                      <TableCell className="text-base">{totalPreviousStock}</TableCell>
+                      <TableCell className="text-base">{totalSoldOut}</TableCell>
+                      <TableCell className="text-xl bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                        {totalAvailableStock}
+                      </TableCell>
                       <TableCell colSpan={2}></TableCell>
                     </TableRow>
                   )}
