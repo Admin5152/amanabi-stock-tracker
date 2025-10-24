@@ -51,82 +51,74 @@ export default function Dashboard() {
   const totalItems = stats.reduce((acc, s) => acc + s.total_items, 0);
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      <div className="rounded-lg bg-gradient-to-r from-primary/10 via-accent/10 to-primary/10 p-8 backdrop-blur-sm">
-        <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+    <div className="space-y-8 animate-fade-in">
+      <div className="border-b border-border pb-6">
+        <h1 className="text-5xl font-bold tracking-tight text-foreground">
           Dashboard
         </h1>
-        <p className="mt-2 text-muted-foreground">Overview of all warehouse operations</p>
+        <p className="mt-2 text-lg text-muted-foreground">Overview of all warehouse operations</p>
       </div>
 
       {/* Summary Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="group overflow-hidden border-2 border-transparent bg-gradient-to-br from-card to-card/80 shadow-card transition-all duration-300 hover:border-primary/20 hover:shadow-glow hover:scale-105">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <Card className="border border-border shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Warehouses</CardTitle>
-            <div className="rounded-full bg-primary/10 p-2 transition-all group-hover:bg-primary/20 group-hover:scale-110">
-              <Warehouse className="h-4 w-4 text-primary" />
-            </div>
+            <CardTitle className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Total Warehouses</CardTitle>
+            <Warehouse className="h-5 w-5 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+            <div className="text-4xl font-bold text-foreground">
               {stats.length}
             </div>
-            <p className="text-xs text-muted-foreground mt-1">Active locations</p>
+            <p className="text-sm text-muted-foreground mt-1">Active locations</p>
           </CardContent>
         </Card>
 
-        <Card className="group overflow-hidden border-2 border-transparent bg-gradient-to-br from-card to-card/80 shadow-card transition-all duration-300 hover:border-primary/20 hover:shadow-glow hover:scale-105">
+        <Card className="border border-border shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Items</CardTitle>
-            <div className="rounded-full bg-primary/10 p-2 transition-all group-hover:bg-primary/20 group-hover:scale-110">
-              <Package className="h-4 w-4 text-primary" />
-            </div>
+            <CardTitle className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Total Items</CardTitle>
+            <Package className="h-5 w-5 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+            <div className="text-4xl font-bold text-foreground">
               {totalItems}
             </div>
-            <p className="text-xs text-muted-foreground mt-1">Unique products tracked</p>
+            <p className="text-sm text-muted-foreground mt-1">Unique products tracked</p>
           </CardContent>
         </Card>
 
-        <Card className="group overflow-hidden border-2 border-transparent bg-gradient-to-br from-card to-card/80 shadow-card transition-all duration-300 hover:border-primary/20 hover:shadow-glow hover:scale-105">
+        <Card className="border border-border shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Available Stock</CardTitle>
-            <div className="rounded-full bg-primary/10 p-2 transition-all group-hover:bg-primary/20 group-hover:scale-110">
-              <BarChart3 className="h-4 w-4 text-primary" />
-            </div>
+            <CardTitle className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Available Stock</CardTitle>
+            <BarChart3 className="h-5 w-5 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+            <div className="text-4xl font-bold text-foreground">
               {totalStock}
             </div>
-            <p className="text-xs text-muted-foreground mt-1">Units in inventory</p>
+            <p className="text-sm text-muted-foreground mt-1">Units in inventory</p>
           </CardContent>
         </Card>
 
-        <Card className="group overflow-hidden border-2 border-transparent bg-gradient-to-br from-card to-card/80 shadow-card transition-all duration-300 hover:border-primary/20 hover:shadow-glow hover:scale-105">
+        <Card className="border border-border shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Sold</CardTitle>
-            <div className="rounded-full bg-primary/10 p-2 transition-all group-hover:bg-primary/20 group-hover:scale-110">
-              <TrendingUp className="h-4 w-4 text-primary" />
-            </div>
+            <CardTitle className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Total Sold</CardTitle>
+            <TrendingUp className="h-5 w-5 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+            <div className="text-4xl font-bold text-foreground">
               {totalSold}
             </div>
-            <p className="text-xs text-muted-foreground mt-1">Units sold overall</p>
+            <p className="text-sm text-muted-foreground mt-1">Units sold overall</p>
           </CardContent>
         </Card>
       </div>
 
       {/* Warehouse Breakdown */}
-      <Card className="overflow-hidden border-2 border-transparent bg-gradient-to-br from-card to-card/80 shadow-elevated transition-all hover:border-primary/10">
-        <CardHeader className="bg-gradient-to-r from-primary/5 to-accent/5">
-          <CardTitle className="text-xl">Warehouse Overview</CardTitle>
-          <CardDescription>Stock levels across all locations</CardDescription>
+      <Card className="overflow-hidden border border-border shadow-sm">
+        <CardHeader className="bg-secondary/50 border-b border-border">
+          <CardTitle className="text-2xl font-bold text-foreground">Warehouse Overview</CardTitle>
+          <CardDescription className="text-base mt-1">Stock levels across all locations</CardDescription>
         </CardHeader>
         <CardContent className="pt-6">
           {loading ? (
@@ -138,29 +130,28 @@ export default function Dashboard() {
               No data available. Start by adding items to your warehouses.
             </p>
           ) : (
-            <div className="space-y-3">
-              {stats.map((stat, index) => (
+            <div className="space-y-4">
+              {stats.map((stat) => (
                 <div
                   key={stat.warehouse_name}
-                  className="group flex items-center justify-between rounded-xl border-2 border-border/50 bg-gradient-to-r from-secondary/30 to-secondary/10 p-5 transition-all duration-300 hover:border-primary/30 hover:shadow-lg hover:scale-[1.02]"
-                  style={{ animationDelay: `${index * 100}ms` }}
+                  className="flex items-center justify-between rounded-lg border border-border bg-card p-6 transition-all hover:border-primary/50 hover:shadow-md"
                 >
                   <div className="flex items-center gap-4">
-                    <div className="rounded-lg bg-primary/10 p-3 transition-all group-hover:bg-primary/20 group-hover:scale-110">
+                    <div className="rounded-lg bg-primary/10 p-3">
                       <Warehouse className="h-6 w-6 text-primary" />
                     </div>
                     <div>
-                      <h3 className="text-lg font-bold">{stat.warehouse_name}</h3>
-                      <p className="text-sm text-muted-foreground">
+                      <h3 className="text-xl font-bold text-foreground">{stat.warehouse_name}</h3>
+                      <p className="text-sm text-muted-foreground mt-0.5">
                         {stat.total_items} items tracked
                       </p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                    <p className="text-4xl font-bold text-primary">
                       {stat.total_stock}
                     </p>
-                    <p className="text-xs text-muted-foreground mt-1">Available</p>
+                    <p className="text-sm text-muted-foreground mt-1">Available</p>
                   </div>
                 </div>
               ))}
