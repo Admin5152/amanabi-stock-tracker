@@ -229,38 +229,45 @@ export default function Warehouse() {
   const totalAvailableStock = items.reduce((acc, item) => acc + (item.available_stock || 0), 0);
 
   return (
-    <div className="space-y-8 animate-fade-in">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-border pb-6">
+    <div className="space-y-4 md:space-y-8 animate-fade-in p-4 md:p-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-border pb-4 md:pb-6">
         <div>
-          <h1 className="text-5xl font-bold tracking-tight text-foreground mb-2">
+          <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-foreground mb-2">
             {warehouseName} Warehouse
           </h1>
-          <p className="text-lg text-muted-foreground">Week {currentWeek} • {new Date(currentDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+          <p className="text-sm md:text-base lg:text-lg text-muted-foreground">Week {currentWeek} • {new Date(currentDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
             <Button 
-              className="gap-2 h-11 px-6 text-base font-semibold"
-              onClick={() => setNewItem({ 
-                item_name: '', 
-                week_number: currentWeek, 
-                previous_stock: 0, 
-                sold_out: 0, 
-                notes: '' 
-              })}
+              type="button"
+              className="gap-2 h-10 md:h-11 px-4 md:px-6 text-sm md:text-base font-semibold w-full sm:w-auto"
+              onClick={(e) => {
+                e.preventDefault();
+                setNewItem({ 
+                  item_name: '', 
+                  week_number: currentWeek, 
+                  previous_stock: 0, 
+                  sold_out: 0, 
+                  notes: '' 
+                });
+              }}
             >
-              <Plus className="h-5 w-5" />
+              <Plus className="h-4 w-4 md:h-5 md:w-5" />
               Add Item
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[500px]">
+          <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Add New Item</DialogTitle>
               <DialogDescription>
                 Enter the details for the new inventory item.
               </DialogDescription>
             </DialogHeader>
-            <div className="grid gap-4 py-4">
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              addNewItem();
+            }} className="grid gap-4 py-4">
               <div className="grid gap-2">
                 <Label htmlFor="item-name">Item Name</Label>
                 <Input
@@ -319,23 +326,23 @@ export default function Warehouse() {
                   placeholder="Add any notes..."
                 />
               </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button onClick={addNewItem}>
-                Save Item
-              </Button>
-            </DialogFooter>
+              <DialogFooter className="gap-2 sm:gap-0">
+                <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit">
+                  Save Item
+                </Button>
+              </DialogFooter>
+            </form>
           </DialogContent>
         </Dialog>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-3">
+      <div className="grid gap-4 md:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         <Card className="border border-border shadow-sm">
           <CardHeader className="pb-3">
-            <Label htmlFor="week" className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Week Number</Label>
+            <Label htmlFor="week" className="text-xs md:text-sm font-semibold uppercase tracking-wide text-muted-foreground">Week Number</Label>
           </CardHeader>
           <CardContent>
             <Input
@@ -344,14 +351,14 @@ export default function Warehouse() {
               value={currentWeek}
               onChange={(e) => setCurrentWeek(parseInt(e.target.value) || 1)}
               min="1"
-              className="h-12 text-lg font-semibold"
+              className="h-10 md:h-12 text-base md:text-lg font-semibold"
             />
           </CardContent>
         </Card>
 
         <Card className="border border-border shadow-sm">
           <CardHeader className="pb-3">
-            <Label htmlFor="date" className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Week Date</Label>
+            <Label htmlFor="date" className="text-xs md:text-sm font-semibold uppercase tracking-wide text-muted-foreground">Week Date</Label>
           </CardHeader>
           <CardContent>
             <Input
@@ -359,17 +366,17 @@ export default function Warehouse() {
               type="date"
               value={currentDate}
               onChange={(e) => setCurrentDate(e.target.value)}
-              className="h-12 text-lg font-semibold"
+              className="h-10 md:h-12 text-base md:text-lg font-semibold"
             />
           </CardContent>
         </Card>
 
-        <Card className="border border-primary/30 bg-primary/5 shadow-sm">
+        <Card className="border border-primary/30 bg-primary/5 shadow-sm sm:col-span-2 lg:col-span-1">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Total Available Stock</CardTitle>
+            <CardTitle className="text-xs md:text-sm font-semibold uppercase tracking-wide text-muted-foreground">Total Available Stock</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-4xl font-bold text-primary">
+            <p className="text-3xl md:text-4xl font-bold text-primary">
               {totalAvailableStock}
             </p>
           </CardContent>
@@ -377,13 +384,13 @@ export default function Warehouse() {
       </div>
 
       <Card className="overflow-hidden border border-border shadow-sm">
-        <CardHeader className="bg-secondary/50 border-b border-border">
-          <CardTitle className="text-2xl font-bold text-foreground">Inventory Items</CardTitle>
-          <CardDescription className="text-base text-muted-foreground mt-1">
+        <CardHeader className="bg-secondary/50 border-b border-border p-4 md:p-6">
+          <CardTitle className="text-xl md:text-2xl font-bold text-foreground">Inventory Items</CardTitle>
+          <CardDescription className="text-sm md:text-base text-muted-foreground mt-1">
             Manage stock levels and track sales for Week {currentWeek}
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           {loading ? (
             <div className="flex justify-center py-8">
               <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
@@ -393,18 +400,18 @@ export default function Warehouse() {
               <Table>
                 <TableHeader>
                   <TableRow className="bg-muted/50 border-b border-border">
-                    <TableHead className="font-semibold text-foreground h-12">Item Name</TableHead>
-                    <TableHead className="font-semibold text-foreground h-12">Previous Stock</TableHead>
-                    <TableHead className="font-semibold text-foreground h-12">Sold Out</TableHead>
-                    <TableHead className="font-semibold text-foreground h-12">Available Stock</TableHead>
-                    <TableHead className="font-semibold text-foreground h-12">Notes</TableHead>
-                    <TableHead className="w-[80px] h-12"></TableHead>
+                    <TableHead className="font-semibold text-foreground h-10 md:h-12 text-xs md:text-sm">Item Name</TableHead>
+                    <TableHead className="font-semibold text-foreground h-10 md:h-12 text-xs md:text-sm">Prev. Stock</TableHead>
+                    <TableHead className="font-semibold text-foreground h-10 md:h-12 text-xs md:text-sm">Sold</TableHead>
+                    <TableHead className="font-semibold text-foreground h-10 md:h-12 text-xs md:text-sm">Available</TableHead>
+                    <TableHead className="font-semibold text-foreground h-10 md:h-12 text-xs md:text-sm hidden lg:table-cell">Notes</TableHead>
+                    <TableHead className="w-[60px] md:w-[80px] h-10 md:h-12"></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {items.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center text-muted-foreground">
+                      <TableCell colSpan={6} className="text-center text-muted-foreground py-8 text-sm">
                         No items for this week. Click "Add Item" to get started.
                       </TableCell>
                     </TableRow>
@@ -412,58 +419,59 @@ export default function Warehouse() {
                     items.map((item, index) => (
                       <TableRow
                         key={item.id}
-                        className={`transition-colors hover:bg-muted/50 h-14 ${index % 2 === 0 ? 'bg-background' : 'bg-muted/20'}`}
+                        className={`transition-colors hover:bg-muted/50 h-12 md:h-14 ${index % 2 === 0 ? 'bg-background' : 'bg-muted/20'}`}
                       >
-                        <TableCell>
+                        <TableCell className="p-2 md:p-4">
                           <Input
                             value={item.item_name}
                             onChange={(e) => updateItem(item.id, 'item_name', e.target.value)}
-                            className="border-0 bg-transparent focus-visible:ring-1 h-10 font-medium"
+                            className="border-0 bg-transparent focus-visible:ring-1 h-8 md:h-10 font-medium text-xs md:text-sm"
                           />
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="p-2 md:p-4">
                           <Input
                             type="number"
                             value={item.previous_stock}
                             onChange={(e) =>
                               updateItem(item.id, 'previous_stock', parseInt(e.target.value) || 0)
                             }
-                            className="border-0 bg-transparent focus-visible:ring-1 h-10 font-medium"
+                            className="border-0 bg-transparent focus-visible:ring-1 h-8 md:h-10 font-medium text-xs md:text-sm w-16 md:w-full"
                             min="0"
                           />
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="p-2 md:p-4">
                           <Input
                             type="number"
                             value={item.sold_out}
                             onChange={(e) =>
                               updateItem(item.id, 'sold_out', parseInt(e.target.value) || 0)
                             }
-                            className="border-0 bg-transparent focus-visible:ring-1 h-10 font-medium"
+                            className="border-0 bg-transparent focus-visible:ring-1 h-8 md:h-10 font-medium text-xs md:text-sm w-16 md:w-full"
                             min="0"
                           />
                         </TableCell>
-                        <TableCell>
-                          <span className="font-bold text-lg text-primary">
+                        <TableCell className="p-2 md:p-4">
+                          <span className="font-bold text-base md:text-lg text-primary">
                             {item.available_stock}
                           </span>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="p-2 md:p-4 hidden lg:table-cell">
                           <Input
                             value={item.notes || ''}
                             onChange={(e) => updateItem(item.id, 'notes', e.target.value)}
                             placeholder="Add notes..."
-                            className="border-0 bg-transparent focus-visible:ring-1 h-10"
+                            className="border-0 bg-transparent focus-visible:ring-1 h-8 md:h-10 text-xs md:text-sm"
                           />
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="p-2 md:p-4">
                           <Button
+                            type="button"
                             variant="ghost"
                             size="icon"
                             onClick={() => deleteItem(item.id)}
-                            className="text-destructive hover:bg-destructive/10"
+                            className="text-destructive hover:bg-destructive/10 h-8 w-8 md:h-10 md:w-10"
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <Trash2 className="h-3 w-3 md:h-4 md:w-4" />
                           </Button>
                         </TableCell>
                       </TableRow>
