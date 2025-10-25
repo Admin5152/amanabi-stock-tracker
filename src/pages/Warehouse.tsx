@@ -79,6 +79,21 @@ export default function Warehouse() {
       return;
     }
 
+    // Ensure we set the creator for auditing and to satisfy backend policies
+    const {
+      data: userData,
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !userData?.user) {
+      toast({
+        title: 'Not signed in',
+        description: 'Please sign in again and try adding the item.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     const itemToAdd = {
       warehouse_name: warehouseName,
       week_number: newItem.week_number,
@@ -87,6 +102,7 @@ export default function Warehouse() {
       previous_stock: newItem.previous_stock,
       sold_out: newItem.sold_out,
       notes: newItem.notes || null,
+      created_by: userData.user.id,
     };
 
     const { data, error } = await supabase
