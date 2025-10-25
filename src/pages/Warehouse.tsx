@@ -6,8 +6,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Trash2, Save } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 import { z } from 'zod';
 
 interface WarehouseItem {
@@ -33,6 +34,8 @@ export default function Warehouse() {
   const [loading, setLoading] = useState(true);
   const [currentWeek, setCurrentWeek] = useState(1);
   const [currentDate, setCurrentDate] = useState(new Date().toISOString().split('T')[0]);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [newItemName, setNewItemName] = useState('');
   const { toast } = useToast();
 
   const warehouseName = warehouse === 'nsakena' ? 'Nsakena' 
@@ -61,11 +64,20 @@ export default function Warehouse() {
   };
 
   const addNewItem = async () => {
+    if (!newItemName.trim()) {
+      toast({
+        title: 'Error',
+        description: 'Item name cannot be empty',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     const newItem = {
       warehouse_name: warehouseName,
       week_number: currentWeek,
       week_date: currentDate,
-      item_name: 'New Item',
+      item_name: newItemName,
       previous_stock: 0,
       sold_out: 0,
       notes: null,
@@ -85,6 +97,8 @@ export default function Warehouse() {
       });
     } else {
       setItems([...items, data]);
+      setDialogOpen(false);
+      setNewItemName('');
       toast({
         title: 'Success',
         description: 'New item added',
@@ -168,13 +182,44 @@ export default function Warehouse() {
           </h1>
           <p className="text-lg text-muted-foreground">Week {currentWeek} • {new Date(currentDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
         </div>
-        <Button 
-          onClick={addNewItem} 
-          className="gap-2 h-11 px-6 text-base font-semibold"
-        >
-          <Plus className="h-5 w-5" />
-          Add Item
-        </Button>
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <DialogTrigger asChild>
+            <Button className="gap-2 h-11 px-6 text-base font-semibold">
+              <Plus className="h-5 w-5" />
+              Add Item
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Add New Item</DialogTitle>
+              <DialogDescription>
+                Enter the name of the item you want to add to the inventory.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-4">
+              <Label htmlFor="item-name" className="mb-2 block">Item Name</Label>
+              <Input
+                id="item-name"
+                value={newItemName}
+                onChange={(e) => setNewItemName(e.target.value)}
+                placeholder="Enter item name..."
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    addNewItem();
+                  }
+                }}
+              />
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={addNewItem}>
+                Save Item
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
 
       <div className="grid gap-6 md:grid-cols-3">
