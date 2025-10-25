@@ -35,7 +35,13 @@ export default function Warehouse() {
   const [currentWeek, setCurrentWeek] = useState(1);
   const [currentDate, setCurrentDate] = useState(new Date().toISOString().split('T')[0]);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [newItemName, setNewItemName] = useState('');
+  const [newItem, setNewItem] = useState({
+    item_name: '',
+    week_number: 1,
+    previous_stock: 0,
+    sold_out: 0,
+    notes: '',
+  });
   const { toast } = useToast();
 
   const warehouseName = warehouse === 'nsakena' ? 'Nsakena' 
@@ -64,7 +70,7 @@ export default function Warehouse() {
   };
 
   const addNewItem = async () => {
-    if (!newItemName.trim()) {
+    if (!newItem.item_name.trim()) {
       toast({
         title: 'Error',
         description: 'Item name cannot be empty',
@@ -73,19 +79,19 @@ export default function Warehouse() {
       return;
     }
 
-    const newItem = {
+    const itemToAdd = {
       warehouse_name: warehouseName,
-      week_number: currentWeek,
+      week_number: newItem.week_number,
       week_date: currentDate,
-      item_name: newItemName,
-      previous_stock: 0,
-      sold_out: 0,
-      notes: null,
+      item_name: newItem.item_name,
+      previous_stock: newItem.previous_stock,
+      sold_out: newItem.sold_out,
+      notes: newItem.notes || null,
     };
 
     const { data, error } = await supabase
       .from('warehouse_items')
-      .insert([newItem])
+      .insert([itemToAdd])
       .select()
       .single();
 
@@ -98,7 +104,13 @@ export default function Warehouse() {
     } else {
       setItems([...items, data]);
       setDialogOpen(false);
-      setNewItemName('');
+      setNewItem({
+        item_name: '',
+        week_number: currentWeek,
+        previous_stock: 0,
+        sold_out: 0,
+        notes: '',
+      });
       toast({
         title: 'Success',
         description: 'New item added',
@@ -184,31 +196,86 @@ export default function Warehouse() {
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="gap-2 h-11 px-6 text-base font-semibold">
+            <Button 
+              className="gap-2 h-11 px-6 text-base font-semibold"
+              onClick={() => setNewItem({ 
+                item_name: '', 
+                week_number: currentWeek, 
+                previous_stock: 0, 
+                sold_out: 0, 
+                notes: '' 
+              })}
+            >
               <Plus className="h-5 w-5" />
               Add Item
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="sm:max-w-[500px]">
             <DialogHeader>
               <DialogTitle>Add New Item</DialogTitle>
               <DialogDescription>
-                Enter the name of the item you want to add to the inventory.
+                Enter the details for the new inventory item.
               </DialogDescription>
             </DialogHeader>
-            <div className="py-4">
-              <Label htmlFor="item-name" className="mb-2 block">Item Name</Label>
-              <Input
-                id="item-name"
-                value={newItemName}
-                onChange={(e) => setNewItemName(e.target.value)}
-                placeholder="Enter item name..."
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    addNewItem();
-                  }
-                }}
-              />
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="item-name">Item Name</Label>
+                <Input
+                  id="item-name"
+                  value={newItem.item_name}
+                  onChange={(e) => setNewItem({ ...newItem, item_name: e.target.value })}
+                  placeholder="Enter item name..."
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="week-number">Week Number</Label>
+                <Input
+                  id="week-number"
+                  type="number"
+                  min="1"
+                  value={newItem.week_number}
+                  onChange={(e) => setNewItem({ ...newItem, week_number: parseInt(e.target.value) || 1 })}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="previous-stock">Previous Stock</Label>
+                <Input
+                  id="previous-stock"
+                  type="number"
+                  min="0"
+                  value={newItem.previous_stock}
+                  onChange={(e) => setNewItem({ ...newItem, previous_stock: parseInt(e.target.value) || 0 })}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="sold-out">Sold Out</Label>
+                <Input
+                  id="sold-out"
+                  type="number"
+                  min="0"
+                  value={newItem.sold_out}
+                  onChange={(e) => setNewItem({ ...newItem, sold_out: parseInt(e.target.value) || 0 })}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="available-stock">Available Stock (Auto-calculated)</Label>
+                <Input
+                  id="available-stock"
+                  type="number"
+                  value={newItem.previous_stock - newItem.sold_out}
+                  disabled
+                  className="bg-muted"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="notes">Notes (Optional)</Label>
+                <Input
+                  id="notes"
+                  value={newItem.notes}
+                  onChange={(e) => setNewItem({ ...newItem, notes: e.target.value })}
+                  placeholder="Add any notes..."
+                />
+              </div>
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setDialogOpen(false)}>
