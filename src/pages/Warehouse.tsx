@@ -112,11 +112,20 @@ export default function Warehouse() {
       .single();
 
     if (error) {
-      toast({
-        title: 'Error',
-        description: error.message,
-        variant: 'destructive',
-      });
+      // Check if it's a permission error
+      if (error.message.includes('row-level security') || error.message.includes('policy')) {
+        toast({
+          title: 'Permission Denied',
+          description: 'You don\'t have permission to add items. Contact your manager for access.',
+          variant: 'destructive',
+        });
+      } else {
+        toast({
+          title: 'Error',
+          description: error.message,
+          variant: 'destructive',
+        });
+      }
     } else {
       setItems([...items, data]);
       setDialogOpen(false);
@@ -162,11 +171,20 @@ export default function Warehouse() {
         .eq('id', id);
 
       if (error) {
-        toast({
-          title: 'Error',
-          description: error.message,
-          variant: 'destructive',
-        });
+        // Check if it's a permission error
+        if (error.message.includes('row-level security') || error.message.includes('policy')) {
+          toast({
+            title: 'Permission Denied',
+            description: 'You don\'t have permission to edit items. Contact your manager for access.',
+            variant: 'destructive',
+          });
+        } else {
+          toast({
+            title: 'Error',
+            description: error.message,
+            variant: 'destructive',
+          });
+        }
       } else {
         setItems(items.map((i) => (i.id === id ? { ...i, [field]: value } : i)));
       }
@@ -183,11 +201,20 @@ export default function Warehouse() {
     const { error } = await supabase.from('warehouse_items').delete().eq('id', id);
 
     if (error) {
-      toast({
-        title: 'Error',
-        description: error.message,
-        variant: 'destructive',
-      });
+      // Check if it's a permission error
+      if (error.message.includes('row-level security') || error.message.includes('policy')) {
+        toast({
+          title: 'Permission Denied',
+          description: 'You don\'t have permission to delete items. Contact your manager for access.',
+          variant: 'destructive',
+        });
+      } else {
+        toast({
+          title: 'Error',
+          description: error.message,
+          variant: 'destructive',
+        });
+      }
     } else {
       setItems(items.filter((i) => i.id !== id));
       toast({
