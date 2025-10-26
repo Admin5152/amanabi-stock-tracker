@@ -43,6 +43,27 @@ export default function Warehouse() {
     notes: '',
   });
   const { toast } = useToast();
+  const [canManage, setCanManage] = useState(false);
+  const [roleLoading, setRoleLoading] = useState(true);
+
+  useEffect(() => {
+    const checkRole = async () => {
+      const { data: authData } = await supabase.auth.getUser();
+      if (!authData?.user) {
+        setCanManage(false);
+        setRoleLoading(false);
+        return;
+      }
+      const { data: roles } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', authData.user.id);
+      const allowed = roles?.some((r: any) => r.role === 'manager' || r.role === 'admin') ?? false;
+      setCanManage(allowed);
+      setRoleLoading(false);
+    };
+    checkRole();
+  }, []);
 
   const warehouseName = warehouse === 'nsakena' ? 'Nsakena' 
     : warehouse === 'yellow-sack' ? 'Yellow Sack' 
@@ -101,6 +122,7 @@ export default function Warehouse() {
       item_name: newItem.item_name,
       previous_stock: newItem.previous_stock,
       sold_out: newItem.sold_out,
+      available_stock: newItem.previous_stock - newItem.sold_out,
       notes: newItem.notes || null,
       created_by: userData.user.id,
     };
@@ -242,8 +264,16 @@ export default function Warehouse() {
             <Button 
               type="button"
               className="gap-2 h-10 md:h-11 px-4 md:px-6 text-sm md:text-base font-semibold w-full sm:w-auto"
-              onClick={(e) => {
-                e.preventDefault();
+              disabled={!canManage || roleLoading}
+              onClick={() => {
+                if (!canManage) {
+                  toast({
+                    title: 'Permission Denied',
+                    description: "You don't have permission to add items. Contact your manager for access.",
+                    variant: 'destructive',
+                  });
+                  return;
+                }
                 setNewItem({ 
                   item_name: '', 
                   week_number: currentWeek, 
@@ -251,6 +281,7 @@ export default function Warehouse() {
                   sold_out: 0, 
                   notes: '' 
                 });
+                setDialogOpen(true);
               }}
             >
               <Plus className="h-4 w-4 md:h-5 md:w-5" />
