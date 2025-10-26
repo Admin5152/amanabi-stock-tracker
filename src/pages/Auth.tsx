@@ -107,28 +107,60 @@ export default function Auth() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-secondary/50 via-background to-secondary/30 p-4 animate-fade-in">
-      <Card className="w-full max-w-md border-2 border-transparent bg-gradient-to-br from-card to-card/80 shadow-glow transition-all hover:border-primary/20 animate-scale-in">
-        <CardHeader className="space-y-1">
-          <div className="mb-4 flex justify-center">
-            <div className="rounded-full bg-gradient-to-r from-primary to-accent p-3 shadow-glow animate-pulse">
-              <Warehouse className="h-12 w-12 text-white" />
+    <div className="flex min-h-screen bg-background">
+      {/* Left Side - Welcome Section */}
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-primary/10 via-primary/5 to-background relative overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(var(--primary-rgb),0.1),transparent_50%)]" />
+        <div className="relative z-10 flex flex-col justify-center px-12 xl:px-20">
+          <div className="mb-8">
+            <Warehouse className="h-16 w-16 text-primary mb-6" />
+            <h1 className="text-4xl xl:text-5xl font-bold mb-4 text-foreground">
+              Warehouse Management System
+            </h1>
+            <p className="text-lg text-muted-foreground max-w-md">
+              Streamline your inventory operations with our comprehensive management platform. 
+              Track stock levels, manage warehouses, and generate insights in real-time.
+            </p>
+          </div>
+          <div className="space-y-4 max-w-md">
+            <div className="flex items-start gap-3">
+              <div className="h-2 w-2 rounded-full bg-primary mt-2" />
+              <p className="text-sm text-muted-foreground">Real-time inventory tracking across multiple warehouses</p>
+            </div>
+            <div className="flex items-start gap-3">
+              <div className="h-2 w-2 rounded-full bg-primary mt-2" />
+              <p className="text-sm text-muted-foreground">Comprehensive reporting and analytics</p>
+            </div>
+            <div className="flex items-start gap-3">
+              <div className="h-2 w-2 rounded-full bg-primary mt-2" />
+              <p className="text-sm text-muted-foreground">Secure role-based access control</p>
             </div>
           </div>
-          <CardTitle className="text-center text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-            {isLogin ? 'Welcome Back' : 'Create Account'}
-          </CardTitle>
-          <CardDescription className="text-center text-base">
-            {isLogin
-              ? 'Sign in to access your warehouse management system'
-              : 'Sign up to start managing your inventory'}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+        </div>
+      </div>
+
+      {/* Right Side - Form */}
+      <div className="flex-1 flex items-center justify-center p-6 lg:p-12">
+        <div className="w-full max-w-md">
+          <div className="mb-8 lg:hidden">
+            <Warehouse className="h-12 w-12 text-primary mx-auto mb-4" />
+          </div>
+          
+          <div className="mb-8">
+            <h2 className="text-2xl sm:text-3xl font-semibold text-foreground mb-2">
+              {isLogin ? 'Welcome back' : 'Create your account'}
+            </h2>
+            <p className="text-muted-foreground">
+              {isLogin
+                ? 'Enter your credentials to access your account'
+                : 'Get started with your warehouse management'}
+            </p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-5">
             {!isLogin && (
               <div className="space-y-2">
-                <Label htmlFor="fullName">Full Name</Label>
+                <Label htmlFor="fullName" className="text-sm font-medium">Full Name</Label>
                 <Input
                   id="fullName"
                   type="text"
@@ -136,11 +168,12 @@ export default function Auth() {
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   required={!isLogin}
+                  className="h-11"
                 />
               </div>
             )}
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email" className="text-sm font-medium">Email</Label>
               <Input
                 id="email"
                 type="email"
@@ -148,10 +181,11 @@ export default function Auth() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                className="h-11"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password" className="text-sm font-medium">Password</Label>
               <Input
                 id="password"
                 type="password"
@@ -159,11 +193,12 @@ export default function Auth() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                className="h-11"
               />
             </div>
             {!isLogin && (
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                <Label htmlFor="confirmPassword" className="text-sm font-medium">Confirm Password</Label>
                 <Input
                   id="confirmPassword"
                   type="password"
@@ -171,31 +206,35 @@ export default function Auth() {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required={!isLogin}
+                  className="h-11"
                 />
               </div>
             )}
             <Button
               type="submit"
-              className="w-full bg-gradient-to-r from-primary to-accent shadow-lg transition-all hover:shadow-glow hover:scale-105"
+              className="w-full h-11 font-medium"
               disabled={loading}
             >
               {loading ? 'Processing...' : isLogin ? 'Sign In' : 'Sign Up'}
             </Button>
           </form>
 
-          <div className="mt-4 text-center text-sm">
+          <div className="mt-6 text-center">
             <button
               type="button"
               onClick={() => setIsLogin(!isLogin)}
-              className="text-primary hover:underline"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               {isLogin
-                ? "Don't have an account? Sign up"
-                : 'Already have an account? Sign in'}
+                ? "Don't have an account? "
+                : 'Already have an account? '}
+              <span className="text-primary font-medium">
+                {isLogin ? 'Sign up' : 'Sign in'}
+              </span>
             </button>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }
