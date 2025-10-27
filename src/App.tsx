@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./lib/auth";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { DashboardLayout } from "./components/layout/DashboardLayout";
+import LoadingAnimation from "./components/LoadingAnimation";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
@@ -23,8 +24,13 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/auth" element={<Auth />} />
+            {/* Loading/Splash Screen */}
+            <Route path="/" element={<LoadingAnimation />} />
+            
+            {/* Authentication */}
+            <Route path="/login" element={<Auth />} />
+            
+            {/* Protected Dashboard Routes */}
             <Route
               path="/dashboard"
               element={
@@ -35,6 +41,7 @@ const App = () => (
             >
               <Route index element={<Dashboard />} />
             </Route>
+            
             <Route
               path="/warehouse/:warehouse"
               element={
@@ -45,6 +52,7 @@ const App = () => (
             >
               <Route index element={<Warehouse />} />
             </Route>
+            
             <Route
               path="/reports"
               element={
@@ -55,6 +63,10 @@ const App = () => (
             >
               <Route index element={<Reports />} />
             </Route>
+            
+            {/* Legacy route redirect */}
+            <Route path="/auth" element={<Navigate to="/login" replace />} />
+            
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

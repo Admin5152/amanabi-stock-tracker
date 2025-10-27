@@ -25,7 +25,7 @@ const Index = () => {
             </div>
           </div>
           <h1 className="mb-6 bg-gradient-to-r from-primary to-accent bg-clip-text text-5xl font-bold text-transparent md:text-6xl animate-fade-in">
-            AMANABi ENT
+            AMANABi ENT.
           </h1>
           <p className="mb-8 text-xl text-muted-foreground animate-fade-in" style={{ animationDelay: '100ms' }}>
             Professional Warehouse Stock Management System
