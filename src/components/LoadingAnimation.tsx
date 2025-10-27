@@ -23,7 +23,7 @@ const LoadingAnimation = () => {
   return (
     <div className={`loading-container ${isVisible ? 'fade-in' : 'fade-out'}`}>
       <img 
-        src="/Amanabi.png" 
+        src="/amanabi-stock-tracker/Amanabi.png"
         alt="Amanabi Logo" 
         className="loading-logo"
       />
