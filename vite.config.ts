@@ -5,8 +5,7 @@ import { componentTagger } from "lovable-tagger";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
-  base: "/amanabi-stock-tracker/",
-
+    base: "/login/",
   server: {
     host: "::",
     port: 8080,
