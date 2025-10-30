@@ -122,7 +122,6 @@ export default function Warehouse() {
       item_name: newItem.item_name,
       previous_stock: newItem.previous_stock,
       sold_out: newItem.sold_out,
-      available_stock: newItem.previous_stock - newItem.sold_out,
       notes: newItem.notes || null,
       created_by: userData.user.id,
     };
