@@ -21,12 +21,9 @@ const LoadingAnimation = () => {
   }, [navigate]);
 
   return (
-    <div className={`loading-container bg-background ${isVisible ? 'fade-in' : 'fade-out'}`}>
-      <img 
-        src={`${import.meta.env.BASE_URL}Amanabi.png`} 
-        alt="Amanabi Logo" 
-        className="loading-logo"
-      />
+    <div className={`loading-container ${isVisible ? 'fade-in' : 'fade-out'}`}>
+<img src={`${import.meta.env.BASE_URL}Amanabi.png`} alt="Amanabi Logo" />
+
     </div>
   );
 };
