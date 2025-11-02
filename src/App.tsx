@@ -22,7 +22,7 @@ const App = () => (
       <AuthProvider>
         <Toaster />
         <Sonner />
-<BrowserRouter basename="/amanabi-stock-tracker">
+<BrowserRouter basename={import.meta.env.BASE_URL}>
           <Routes>
             {/* Loading/Splash Screen */}
             <Route path="/" element={<LoadingAnimation />} />
