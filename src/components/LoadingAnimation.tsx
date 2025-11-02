@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import './LoadingAnimation.css';
 
 const LoadingAnimation = () => {
   const [isVisible, setIsVisible] = useState(true);
@@ -20,8 +21,12 @@ const LoadingAnimation = () => {
   }, [navigate]);
 
   return (
-    <div className={`fixed inset-0 flex items-center justify-center bg-background transition-opacity duration-1000 ${isVisible ? 'opacity-100' : 'opacity-0'}`}>
-      <h1 className="text-4xl md:text-6xl font-bold text-foreground">AMANABI ENT.</h1>
+    <div className={`loading-container bg-background ${isVisible ? 'fade-in' : 'fade-out'}`}>
+      <img 
+        src={`${import.meta.env.BASE_URL}Amanabi.png`} 
+        alt="Amanabi Logo" 
+        className="loading-logo"
+      />
     </div>
   );
 };
