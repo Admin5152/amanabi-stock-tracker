@@ -8,7 +8,12 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { User, Settings as SettingsIcon, Database, Save, Users } from 'lucide-react';
+import { User, Settings as SettingsIcon, Database, Save, Users, Trash2 } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Database as DatabaseTypes } from '@/integrations/supabase/types';
+
+type AppRole = DatabaseTypes['public']['Enums']['app_role'];
 
 interface ActivityLog {
   id: string;
@@ -23,7 +28,7 @@ interface UserWithRole {
   id: string;
   email: string;
   full_name: string;
-  role: string;
+  role: AppRole;
   last_login: string | null;
 }
 
@@ -38,11 +43,16 @@ export default function Settings() {
     full_name: '',
     email: '',
   });
-  const [userRole, setUserRole] = useState('employee');
+  const [userRole, setUserRole] = useState<AppRole>('employee');
   const [preferences, setPreferences] = useState({
     defaultWarehouse: '',
     currencySymbol: 'GHS',
   });
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<UserWithRole | null>(null);
+  const [updatingRole, setUpdatingRole] = useState<string | null>(null);
+
+  const isManagerOrAdmin = userRole === 'manager' || userRole === 'admin';
 
   useEffect(() => {
     loadData();
@@ -119,7 +129,7 @@ export default function Settings() {
           id: p.id,
           email: p.email || '',
           full_name: p.full_name || '',
-          role: roleData?.role || 'employee',
+          role: (roleData?.role as AppRole) || 'employee',
           last_login: lastLoginData?.created_at || null,
         });
       }
@@ -155,6 +165,141 @@ export default function Settings() {
     }
 
     setSaving(false);
+  };
+
+  const updateUserRole = async (userId: string, newRole: AppRole) => {
+    if (!isManagerOrAdmin) {
+      toast({
+        title: 'Permission Denied',
+        description: "You don't have permission to change roles.",
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Prevent self-demotion for protection
+    if (userId === user?.id) {
+      toast({
+        title: 'Error',
+        description: "You cannot change your own role.",
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setUpdatingRole(userId);
+
+    // Check if user already has a role entry
+    const { data: existingRole } = await supabase
+      .from('user_roles')
+      .select('id')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    let error;
+    if (existingRole) {
+      // Update existing role
+      const result = await supabase
+        .from('user_roles')
+        .update({ role: newRole })
+        .eq('user_id', userId);
+      error = result.error;
+    } else {
+      // Insert new role
+      const result = await supabase
+        .from('user_roles')
+        .insert({ user_id: userId, role: newRole });
+      error = result.error;
+    }
+
+    if (error) {
+      toast({
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } else {
+      // Log activity
+      await supabase.from('activity_logs').insert({
+        user_id: user?.id,
+        action: 'ROLE_CHANGED',
+        description: `Changed user role to ${newRole}`,
+        metadata: {
+          target_user_id: userId,
+          new_role: newRole,
+        },
+      });
+
+      toast({
+        title: 'Success',
+        description: `User role updated to ${newRole}`,
+      });
+
+      // Update local state
+      setUsers(users.map(u => 
+        u.id === userId ? { ...u, role: newRole } : u
+      ));
+    }
+
+    setUpdatingRole(null);
+  };
+
+  const deleteUser = async () => {
+    if (!userToDelete || !isManagerOrAdmin) return;
+
+    // Prevent self-deletion
+    if (userToDelete.id === user?.id) {
+      toast({
+        title: 'Error',
+        description: "You cannot remove yourself.",
+        variant: 'destructive',
+      });
+      setDeleteDialogOpen(false);
+      setUserToDelete(null);
+      return;
+    }
+
+    // First delete user roles
+    await supabase
+      .from('user_roles')
+      .delete()
+      .eq('user_id', userToDelete.id);
+
+    // Then delete the profile
+    const { error } = await supabase
+      .from('profiles')
+      .delete()
+      .eq('id', userToDelete.id);
+
+    if (error) {
+      toast({
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } else {
+      // Log activity
+      await supabase.from('activity_logs').insert({
+        user_id: user?.id,
+        action: 'USER_REMOVED',
+        description: `Removed user ${userToDelete.email}`,
+        metadata: {
+          removed_user_id: userToDelete.id,
+          removed_email: userToDelete.email,
+        },
+      });
+
+      toast({
+        title: 'Success',
+        description: `User ${userToDelete.email} has been removed`,
+      });
+
+      // Update local state
+      setUsers(users.filter(u => u.id !== userToDelete.id));
+    }
+
+    setDeleteDialogOpen(false);
+    setUserToDelete(null);
   };
 
   const clearLocalStorage = () => {
@@ -232,6 +377,12 @@ export default function Settings() {
                         <p className="text-sm text-muted-foreground">{log.description}</p>
                         {log.metadata?.item_name && (
                           <p className="text-xs text-muted-foreground mt-1">Item: {log.metadata.item_name}</p>
+                        )}
+                        {log.metadata?.new_role && (
+                          <p className="text-xs text-muted-foreground mt-1">New role: {log.metadata.new_role}</p>
+                        )}
+                        {log.metadata?.removed_email && (
+                          <p className="text-xs text-muted-foreground mt-1">Removed: {log.metadata.removed_email}</p>
                         )}
                       </div>
                       <span className="text-xs text-muted-foreground whitespace-nowrap ml-4">
@@ -354,6 +505,11 @@ export default function Settings() {
               </CardTitle>
             </CardHeader>
             <CardContent>
+              {!isManagerOrAdmin && (
+                <div className="text-center py-4 mb-4 text-muted-foreground bg-muted/30 rounded-lg">
+                  You need manager or admin privileges to manage users.
+                </div>
+              )}
               {users.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   No users found.
@@ -374,9 +530,44 @@ export default function Settings() {
                           </p>
                         )}
                       </div>
-                      <Badge variant={u.role === 'admin' ? 'default' : u.role === 'manager' ? 'secondary' : 'outline'} className="uppercase">
-                        {u.role}
-                      </Badge>
+                      <div className="flex items-center gap-3">
+                        {isManagerOrAdmin && u.id !== user?.id ? (
+                          <>
+                            <Select
+                              value={u.role}
+                              onValueChange={(value) => updateUserRole(u.id, value as AppRole)}
+                              disabled={updatingRole === u.id}
+                            >
+                              <SelectTrigger className="w-32">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="employee">Employee</SelectItem>
+                                <SelectItem value="manager">Manager</SelectItem>
+                                <SelectItem value="admin">Admin</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                              onClick={() => {
+                                setUserToDelete(u);
+                                setDeleteDialogOpen(true);
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </>
+                        ) : (
+                          <Badge 
+                            variant={u.role === 'admin' ? 'default' : u.role === 'manager' ? 'secondary' : 'outline'} 
+                            className="uppercase"
+                          >
+                            {u.role} {u.id === user?.id && '(You)'}
+                          </Badge>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -385,6 +576,27 @@ export default function Settings() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Delete User Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Remove User</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to remove <strong>{userToDelete?.email}</strong>? 
+              This will delete their profile and remove their access to the system.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={deleteUser}>
+              Remove User
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
