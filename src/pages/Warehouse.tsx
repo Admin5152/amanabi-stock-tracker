@@ -2,14 +2,15 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, Pencil, Search, Filter, Calendar } from 'lucide-react';
 import { z } from 'zod';
+import { Badge } from '@/components/ui/badge';
 
 interface WarehouseItem {
   id: string;
@@ -35,6 +36,7 @@ export default function Warehouse() {
   const [currentWeek, setCurrentWeek] = useState(1);
   const [currentDate, setCurrentDate] = useState(new Date().toISOString().split('T')[0]);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const [newItem, setNewItem] = useState({
     item_name: '',
     week_number: 1,
@@ -67,6 +69,7 @@ export default function Warehouse() {
 
   const warehouseName = warehouse === 'nsakena' ? 'Nsakena' 
     : warehouse === 'yellow-sack' ? 'Yellow Sack' 
+    : warehouse === 'viv' ? 'Viv'
     : 'Dossia';
 
   useEffect(() => {
@@ -100,11 +103,7 @@ export default function Warehouse() {
       return;
     }
 
-    // Ensure we set the creator for auditing and to satisfy backend policies
-    const {
-      data: userData,
-      error: userError,
-    } = await supabase.auth.getUser();
+    const { data: userData, error: userError } = await supabase.auth.getUser();
 
     if (userError || !userData?.user) {
       toast({
@@ -122,7 +121,6 @@ export default function Warehouse() {
       item_name: newItem.item_name,
       previous_stock: newItem.previous_stock,
       sold_out: newItem.sold_out,
-     // available_stock: newItem.previous_stock - newItem.sold_out,
       notes: newItem.notes || null,
       created_by: userData.user.id,
     };
@@ -134,11 +132,10 @@ export default function Warehouse() {
       .single();
 
     if (error) {
-      // Check if it's a permission error
       if (error.message.includes('row-level security') || error.message.includes('policy')) {
         toast({
           title: 'Permission Denied',
-          description: 'You don\'t have permission to add items. Contact your manager for access.',
+          description: "You don't have permission to add items. Contact your manager for access.",
           variant: 'destructive',
         });
       } else {
@@ -193,11 +190,10 @@ export default function Warehouse() {
         .eq('id', id);
 
       if (error) {
-        // Check if it's a permission error
         if (error.message.includes('row-level security') || error.message.includes('policy')) {
           toast({
             title: 'Permission Denied',
-            description: 'You don\'t have permission to edit items. Contact your manager for access.',
+            description: "You don't have permission to edit items. Contact your manager for access.",
             variant: 'destructive',
           });
         } else {
@@ -223,11 +219,10 @@ export default function Warehouse() {
     const { error } = await supabase.from('warehouse_items').delete().eq('id', id);
 
     if (error) {
-      // Check if it's a permission error
       if (error.message.includes('row-level security') || error.message.includes('policy')) {
         toast({
           title: 'Permission Denied',
-          description: 'You don\'t have permission to delete items. Contact your manager for access.',
+          description: "You don't have permission to delete items. Contact your manager for access.",
           variant: 'destructive',
         });
       } else {
@@ -246,24 +241,29 @@ export default function Warehouse() {
     }
   };
 
-  const totalPreviousStock = items.reduce((acc, item) => acc + item.previous_stock, 0);
-  const totalSoldOut = items.reduce((acc, item) => acc + item.sold_out, 0);
-  const totalAvailableStock = items.reduce((acc, item) => acc + (item.available_stock || 0), 0);
+  const filteredItems = items.filter(item => 
+    item.item_name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const totalPreviousStock = filteredItems.reduce((acc, item) => acc + item.previous_stock, 0);
+  const totalSoldOut = filteredItems.reduce((acc, item) => acc + item.sold_out, 0);
+  const totalAvailableStock = filteredItems.reduce((acc, item) => acc + (item.available_stock || 0), 0);
 
   return (
-    <div className="space-y-4 md:space-y-8 animate-fade-in p-4 md:p-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-border pb-4 md:pb-6">
+    <div className="space-y-6 animate-fade-in">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-foreground mb-2">
-            {warehouseName} Warehouse
-          </h1>
-          <p className="text-sm md:text-base lg:text-lg text-muted-foreground">Week {currentWeek} • {new Date(currentDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+          <h1 className="text-3xl font-bold text-foreground">{warehouseName} Warehouse</h1>
+          <div className="flex items-center gap-2 mt-2 text-muted-foreground">
+            <Calendar className="h-4 w-4" />
+            <span>Week {currentWeek} • {new Date(currentDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+          </div>
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
             <Button 
-              type="button"
-              className="gap-2 h-10 md:h-11 px-4 md:px-6 text-sm md:text-base font-semibold w-full sm:w-auto"
+              className="gap-2 bg-primary hover:bg-primary/90"
               disabled={!canManage || roleLoading}
               onClick={() => {
                 if (!canManage) {
@@ -284,11 +284,11 @@ export default function Warehouse() {
                 setDialogOpen(true);
               }}
             >
-              <Plus className="h-4 w-4 md:h-5 md:w-5" />
-              Add Item
+              <Plus className="h-4 w-4" />
+              Add New Item
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+          <DialogContent className="sm:max-w-[500px]">
             <DialogHeader>
               <DialogTitle>Add New Item</DialogTitle>
               <DialogDescription>
@@ -308,45 +308,48 @@ export default function Warehouse() {
                   placeholder="Enter item name..."
                 />
               </div>
-              <div className="grid gap-2">
-                <Label htmlFor="week-number">Week Number</Label>
-                <Input
-                  id="week-number"
-                  type="number"
-                  min="1"
-                  value={newItem.week_number}
-                  onChange={(e) => setNewItem({ ...newItem, week_number: parseInt(e.target.value) || 1 })}
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="week-number">Week Number</Label>
+                  <Input
+                    id="week-number"
+                    type="number"
+                    min="1"
+                    value={newItem.week_number}
+                    onChange={(e) => setNewItem({ ...newItem, week_number: parseInt(e.target.value) || 1 })}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="previous-stock">Previous Stock</Label>
+                  <Input
+                    id="previous-stock"
+                    type="number"
+                    min="0"
+                    value={newItem.previous_stock}
+                    onChange={(e) => setNewItem({ ...newItem, previous_stock: parseInt(e.target.value) || 0 })}
+                  />
+                </div>
               </div>
-              <div className="grid gap-2">
-                <Label htmlFor="previous-stock">Previous Stock</Label>
-                <Input
-                  id="previous-stock"
-                  type="number"
-                  min="0"
-                  value={newItem.previous_stock}
-                  onChange={(e) => setNewItem({ ...newItem, previous_stock: parseInt(e.target.value) || 0 })}
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="sold-out">Sold Out</Label>
-                <Input
-                  id="sold-out"
-                  type="number"
-                  min="0"
-                  value={newItem.sold_out}
-                  onChange={(e) => setNewItem({ ...newItem, sold_out: parseInt(e.target.value) || 0 })}
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="available-stock">Available Stock (Auto-calculated)</Label>
-                <Input
-                  id="available-stock"
-                  type="number"
-                  value={newItem.previous_stock - newItem.sold_out}
-                  disabled
-                  className="bg-muted"
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="sold-out">Sold Out</Label>
+                  <Input
+                    id="sold-out"
+                    type="number"
+                    min="0"
+                    value={newItem.sold_out}
+                    onChange={(e) => setNewItem({ ...newItem, sold_out: parseInt(e.target.value) || 0 })}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label>Available Stock</Label>
+                  <Input
+                    type="number"
+                    value={newItem.previous_stock - newItem.sold_out}
+                    disabled
+                    className="bg-muted"
+                  />
+                </div>
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="notes">Notes (Optional)</Label>
@@ -361,65 +364,81 @@ export default function Warehouse() {
                 <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
                   Cancel
                 </Button>
-                <Button type="submit">
-                  Save Item
-                </Button>
+                <Button type="submit">Save Item</Button>
               </DialogFooter>
             </form>
           </DialogContent>
         </Dialog>
       </div>
 
-      <div className="grid gap-4 md:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-        <Card className="border border-border shadow-sm">
-          <CardHeader className="pb-3">
-            <Label htmlFor="week" className="text-xs md:text-sm font-semibold uppercase tracking-wide text-muted-foreground">Week Number</Label>
+      {/* Week Controls */}
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
+        <Card className="border-2">
+          <CardHeader className="pb-2">
+            <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Week Number</Label>
           </CardHeader>
           <CardContent>
             <Input
-              id="week"
               type="number"
               value={currentWeek}
               onChange={(e) => setCurrentWeek(parseInt(e.target.value) || 1)}
               min="1"
-              className="h-10 md:h-12 text-base md:text-lg font-semibold"
+              className="text-lg font-semibold h-12"
             />
           </CardContent>
         </Card>
 
-        <Card className="border border-border shadow-sm">
-          <CardHeader className="pb-3">
-            <Label htmlFor="date" className="text-xs md:text-sm font-semibold uppercase tracking-wide text-muted-foreground">Week Date</Label>
+        <Card className="border-2">
+          <CardHeader className="pb-2">
+            <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Week Date</Label>
           </CardHeader>
           <CardContent>
-            <Input
-              id="date"
-              type="date"
-              value={currentDate}
-              onChange={(e) => setCurrentDate(e.target.value)}
-              className="h-10 md:h-12 text-base md:text-lg font-semibold"
-            />
+            <div className="relative">
+              <Input
+                type="date"
+                value={currentDate}
+                onChange={(e) => setCurrentDate(e.target.value)}
+                className="text-lg font-semibold h-12"
+              />
+            </div>
           </CardContent>
         </Card>
 
-        <Card className="border border-primary/30 bg-primary/5 shadow-sm sm:col-span-2 lg:col-span-1">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-xs md:text-sm font-semibold uppercase tracking-wide text-muted-foreground">Total Available Stock</CardTitle>
+        <Card className="border-2 border-primary/20 bg-primary/5">
+          <CardHeader className="pb-2">
+            <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Total Available Stock</Label>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl md:text-4xl font-bold text-primary">
+            <p className={`text-3xl font-bold ${totalAvailableStock < 0 ? 'text-destructive' : 'text-primary'}`}>
               {totalAvailableStock}
             </p>
           </CardContent>
         </Card>
       </div>
 
-      <Card className="overflow-hidden border border-border shadow-sm">
-        <CardHeader className="bg-secondary/50 border-b border-border p-4 md:p-6">
-          <CardTitle className="text-xl md:text-2xl font-bold text-foreground">Inventory Items</CardTitle>
-          <CardDescription className="text-sm md:text-base text-muted-foreground mt-1">
-            Manage stock levels and track sales for Week {currentWeek}
-          </CardDescription>
+      {/* Inventory Table */}
+      <Card className="border-2">
+        <CardHeader className="border-b">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <CardTitle>Inventory Items</CardTitle>
+              <p className="text-sm text-muted-foreground mt-1">Managing stock for Week {currentWeek}</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search item..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9 w-full sm:w-[200px]"
+                />
+              </div>
+              <Button variant="outline" size="icon">
+                <Filter className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
         </CardHeader>
         <CardContent className="p-0">
           {loading ? (
@@ -430,94 +449,82 @@ export default function Warehouse() {
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow className="bg-muted/50 border-b border-border">
-                    <TableHead className="font-semibold text-foreground h-10 md:h-12 text-xs md:text-sm">Item Name</TableHead>
-                    <TableHead className="font-semibold text-foreground h-10 md:h-12 text-xs md:text-sm">Prev. Stock</TableHead>
-                    <TableHead className="font-semibold text-foreground h-10 md:h-12 text-xs md:text-sm">Sold</TableHead>
-                    <TableHead className="font-semibold text-foreground h-10 md:h-12 text-xs md:text-sm">Available</TableHead>
-                    <TableHead className="font-semibold text-foreground h-10 md:h-12 text-xs md:text-sm hidden lg:table-cell">Notes</TableHead>
-                    <TableHead className="w-[60px] md:w-[80px] h-10 md:h-12"></TableHead>
+                  <TableRow className="bg-muted/50">
+                    <TableHead className="font-semibold text-xs uppercase tracking-wide">Item Name</TableHead>
+                    <TableHead className="font-semibold text-xs uppercase tracking-wide text-center">Prev. Stock</TableHead>
+                    <TableHead className="font-semibold text-xs uppercase tracking-wide text-center">Sold</TableHead>
+                    <TableHead className="font-semibold text-xs uppercase tracking-wide text-center">Available</TableHead>
+                    <TableHead className="font-semibold text-xs uppercase tracking-wide">Notes</TableHead>
+                    <TableHead className="font-semibold text-xs uppercase tracking-wide text-center">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {items.length === 0 ? (
+                  {filteredItems.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center text-muted-foreground py-8 text-sm">
-                        No items for this week. Click "Add Item" to get started.
+                      <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                        No items for this week. Click "Add New Item" to get started.
                       </TableCell>
                     </TableRow>
                   ) : (
-                    items.map((item, index) => (
-                      <TableRow
-                        key={item.id}
-                        className={`transition-colors hover:bg-muted/50 h-12 md:h-14 ${index % 2 === 0 ? 'bg-background' : 'bg-muted/20'}`}
-                      >
-                        <TableCell className="p-2 md:p-4">
-                          <Input
-                            value={item.item_name}
-                            onChange={(e) => updateItem(item.id, 'item_name', e.target.value)}
-                            className="border-0 bg-transparent focus-visible:ring-1 h-8 md:h-10 font-medium text-xs md:text-sm"
-                          />
-                        </TableCell>
-                        <TableCell className="p-2 md:p-4">
-                          <Input
-                            type="number"
-                            value={item.previous_stock}
-                            onChange={(e) =>
-                              updateItem(item.id, 'previous_stock', parseInt(e.target.value) || 0)
-                            }
-                            className="border-0 bg-transparent focus-visible:ring-1 h-8 md:h-10 font-medium text-xs md:text-sm w-16 md:w-full"
-                            min="0"
-                          />
-                        </TableCell>
-                        <TableCell className="p-2 md:p-4">
-                          <Input
-                            type="number"
-                            value={item.sold_out}
-                            onChange={(e) =>
-                              updateItem(item.id, 'sold_out', parseInt(e.target.value) || 0)
-                            }
-                            className="border-0 bg-transparent focus-visible:ring-1 h-8 md:h-10 font-medium text-xs md:text-sm w-16 md:w-full"
-                            min="0"
-                          />
-                        </TableCell>
-                        <TableCell className="p-2 md:p-4">
-                          <span className="font-bold text-base md:text-lg text-primary">
-                            {item.available_stock}
+                    <>
+                      {filteredItems.map((item) => (
+                        <TableRow key={item.id} className="hover:bg-muted/50">
+                          <TableCell>
+                            <div>
+                              <p className="font-medium">{item.item_name}</p>
+                              <Badge variant="secondary" className="mt-1 text-xs">
+                                {item.notes ? item.notes.split(' ')[0] : 'Item'}
+                              </Badge>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-center">{item.previous_stock}</TableCell>
+                          <TableCell className="text-center">{item.sold_out}</TableCell>
+                          <TableCell className="text-center">
+                            <span className={item.available_stock !== null && item.available_stock < 0 ? 'text-destructive font-semibold' : ''}>
+                              {item.available_stock ?? 0}
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-muted-foreground">{item.notes || '-'}</TableCell>
+                          <TableCell>
+                            <div className="flex items-center justify-center gap-1">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                                disabled={!canManage}
+                                onClick={() => {
+                                  // Edit functionality can be expanded
+                                }}
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-destructive hover:text-destructive"
+                                disabled={!canManage}
+                                onClick={() => deleteItem(item.id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                      {/* Totals Row */}
+                      <TableRow className="bg-muted/50 font-semibold">
+                        <TableCell>Totals</TableCell>
+                        <TableCell className="text-center">{totalPreviousStock}</TableCell>
+                        <TableCell className="text-center">{totalSoldOut}</TableCell>
+                        <TableCell className="text-center">
+                          <span className={totalAvailableStock < 0 ? 'text-destructive' : ''}>
+                            {totalAvailableStock}
                           </span>
                         </TableCell>
-                        <TableCell className="p-2 md:p-4 hidden lg:table-cell">
-                          <Input
-                            value={item.notes || ''}
-                            onChange={(e) => updateItem(item.id, 'notes', e.target.value)}
-                            placeholder="Add notes..."
-                            className="border-0 bg-transparent focus-visible:ring-1 h-8 md:h-10 text-xs md:text-sm"
-                          />
-                        </TableCell>
-                        <TableCell className="p-2 md:p-4">
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => deleteItem(item.id)}
-                            className="text-destructive hover:bg-destructive/10 h-8 w-8 md:h-10 md:w-10"
-                          >
-                            <Trash2 className="h-3 w-3 md:h-4 md:w-4" />
-                          </Button>
-                        </TableCell>
+                        <TableCell></TableCell>
+                        <TableCell></TableCell>
                       </TableRow>
-                    ))
-                  )}
-                  {items.length > 0 && (
-                    <TableRow className="border-t-2 border-border bg-muted/30 font-bold h-16">
-                      <TableCell className="text-lg">Total</TableCell>
-                      <TableCell className="text-lg">{totalPreviousStock}</TableCell>
-                      <TableCell className="text-lg">{totalSoldOut}</TableCell>
-                      <TableCell className="text-2xl text-primary">
-                        {totalAvailableStock}
-                      </TableCell>
-                      <TableCell colSpan={2}></TableCell>
-                    </TableRow>
+                    </>
                   )}
                 </TableBody>
               </Table>
