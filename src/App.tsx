@@ -12,6 +12,7 @@ import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import Warehouse from "./pages/Warehouse";
 import Reports from "./pages/Reports";
+import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -62,6 +63,17 @@ const App = () => (
               }
             >
               <Route index element={<Reports />} />
+            </Route>
+
+            <Route
+              path="/settings"
+              element={
+                <ProtectedRoute>
+                  <DashboardLayout />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<Settings />} />
             </Route>
             
             {/* Legacy route redirect */}
