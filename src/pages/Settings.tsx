@@ -16,6 +16,7 @@ interface ActivityLog {
   description: string;
   created_at: string;
   metadata: any;
+  user_id: string | null;
 }
 
 interface UserWithRole {
@@ -23,6 +24,7 @@ interface UserWithRole {
   email: string;
   full_name: string;
   role: string;
+  last_login: string | null;
 }
 
 export default function Settings() {
@@ -89,7 +91,7 @@ export default function Settings() {
       setActivityLogs(logs);
     }
 
-    // Load users list (for admins)
+    // Load users list (for managers/admins)
     const { data: profilesList } = await supabase
       .from('profiles')
       .select('id, email, full_name');
@@ -103,11 +105,22 @@ export default function Settings() {
           .eq('user_id', p.id)
           .maybeSingle();
         
+        // Get last login from activity logs
+        const { data: lastLoginData } = await supabase
+          .from('activity_logs')
+          .select('created_at')
+          .eq('user_id', p.id)
+          .eq('action', 'USER_LOGIN')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        
         usersWithRoles.push({
           id: p.id,
           email: p.email || '',
           full_name: p.full_name || '',
           role: roleData?.role || 'employee',
+          last_login: lastLoginData?.created_at || null,
         });
       }
       setUsers(usersWithRoles);
@@ -207,11 +220,21 @@ export default function Settings() {
                       key={log.id}
                       className="flex items-start justify-between p-3 rounded-lg border bg-muted/20"
                     >
-                      <div>
-                        <p className="font-medium">{log.action}</p>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium">{log.action}</p>
+                          {log.metadata?.email && (
+                            <Badge variant="outline" className="text-xs">
+                              {log.metadata.email}
+                            </Badge>
+                          )}
+                        </div>
                         <p className="text-sm text-muted-foreground">{log.description}</p>
+                        {log.metadata?.item_name && (
+                          <p className="text-xs text-muted-foreground mt-1">Item: {log.metadata.item_name}</p>
+                        )}
                       </div>
-                      <span className="text-xs text-muted-foreground whitespace-nowrap">
+                      <span className="text-xs text-muted-foreground whitespace-nowrap ml-4">
                         {formatDate(log.created_at)}
                       </span>
                     </div>
@@ -342,9 +365,14 @@ export default function Settings() {
                       key={u.id}
                       className="flex items-center justify-between p-4 rounded-lg border bg-muted/20"
                     >
-                      <div>
+                      <div className="flex-1">
                         <p className="font-medium">{u.full_name || 'Unnamed User'}</p>
                         <p className="text-sm text-muted-foreground">{u.email}</p>
+                        {u.last_login && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Last login: {formatDate(u.last_login)}
+                          </p>
+                        )}
                       </div>
                       <Badge variant={u.role === 'admin' ? 'default' : u.role === 'manager' ? 'secondary' : 'outline'} className="uppercase">
                         {u.role}
