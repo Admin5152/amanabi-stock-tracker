@@ -27,6 +27,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
+        
+        // Log login event (deferred to avoid deadlock)
+        if (event === 'SIGNED_IN' && session?.user) {
+          setTimeout(() => {
+            logLoginActivity(session.user.id, session.user.email || '');
+          }, 0);
+        }
       }
     );
 
@@ -39,6 +46,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  const logLoginActivity = async (userId: string, email: string) => {
+    try {
+      await supabase.from('activity_logs').insert({
+        user_id: userId,
+        action: 'USER_LOGIN',
+        description: `User ${email} logged in`,
+        metadata: { email, login_time: new Date().toISOString() }
+      });
+    } catch (err) {
+      console.error('Failed to log login activity:', err);
+    }
+  };
 
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({

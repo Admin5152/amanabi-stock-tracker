@@ -36,6 +36,8 @@ export default function Warehouse() {
   const [currentWeek, setCurrentWeek] = useState(1);
   const [currentDate, setCurrentDate] = useState(new Date().toISOString().split('T')[0]);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<WarehouseItem | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [newItem, setNewItem] = useState({
     item_name: '',
@@ -215,6 +217,68 @@ export default function Warehouse() {
     }
   };
 
+  const saveEditedItem = async () => {
+    if (!editingItem) return;
+
+    try {
+      const validation = itemSchema.safeParse({
+        item_name: editingItem.item_name,
+        previous_stock: editingItem.previous_stock,
+        sold_out: editingItem.sold_out,
+      });
+
+      if (!validation.success) {
+        toast({
+          title: 'Validation Error',
+          description: validation.error.errors[0].message,
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      const { error } = await supabase
+        .from('warehouse_items')
+        .update({
+          item_name: editingItem.item_name,
+          previous_stock: editingItem.previous_stock,
+          sold_out: editingItem.sold_out,
+          notes: editingItem.notes,
+        })
+        .eq('id', editingItem.id);
+
+      if (error) {
+        if (error.message.includes('row-level security') || error.message.includes('policy')) {
+          toast({
+            title: 'Permission Denied',
+            description: "You don't have permission to edit items. Contact your manager for access.",
+            variant: 'destructive',
+          });
+        } else {
+          toast({
+            title: 'Error',
+            description: error.message,
+            variant: 'destructive',
+          });
+        }
+      } else {
+        // Reload items to get updated available_stock from DB
+        loadItems();
+        setEditDialogOpen(false);
+        setEditingItem(null);
+        toast({
+          title: 'Success',
+          description: 'Item updated successfully',
+        });
+      }
+    } catch (err: any) {
+      toast({
+        title: 'Error',
+        description: err.message,
+        variant: 'destructive',
+      });
+    }
+  };
+
   const deleteItem = async (id: string) => {
     const { error } = await supabase.from('warehouse_items').delete().eq('id', id);
 
@@ -369,6 +433,83 @@ export default function Warehouse() {
             </form>
           </DialogContent>
         </Dialog>
+
+        {/* Edit Item Dialog */}
+        <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle>Edit Item</DialogTitle>
+              <DialogDescription>
+                Update the details for this inventory item.
+              </DialogDescription>
+            </DialogHeader>
+            {editingItem && (
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                saveEditedItem();
+              }} className="grid gap-4 py-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-item-name">Item Name</Label>
+                  <Input
+                    id="edit-item-name"
+                    value={editingItem.item_name}
+                    onChange={(e) => setEditingItem({ ...editingItem, item_name: e.target.value })}
+                    placeholder="Enter item name..."
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="edit-previous-stock">Previous Stock</Label>
+                    <Input
+                      id="edit-previous-stock"
+                      type="number"
+                      min="0"
+                      value={editingItem.previous_stock}
+                      onChange={(e) => setEditingItem({ ...editingItem, previous_stock: parseInt(e.target.value) || 0 })}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="edit-sold-out">Sold Out</Label>
+                    <Input
+                      id="edit-sold-out"
+                      type="number"
+                      min="0"
+                      value={editingItem.sold_out}
+                      onChange={(e) => setEditingItem({ ...editingItem, sold_out: parseInt(e.target.value) || 0 })}
+                    />
+                  </div>
+                </div>
+                <div className="grid gap-2">
+                  <Label>Available Stock (Calculated)</Label>
+                  <Input
+                    type="number"
+                    value={editingItem.previous_stock - editingItem.sold_out}
+                    disabled
+                    className="bg-muted"
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-notes">Notes (Optional)</Label>
+                  <Input
+                    id="edit-notes"
+                    value={editingItem.notes || ''}
+                    onChange={(e) => setEditingItem({ ...editingItem, notes: e.target.value })}
+                    placeholder="Add any notes..."
+                  />
+                </div>
+                <DialogFooter className="gap-2 sm:gap-0">
+                  <Button type="button" variant="outline" onClick={() => {
+                    setEditDialogOpen(false);
+                    setEditingItem(null);
+                  }}>
+                    Cancel
+                  </Button>
+                  <Button type="submit">Save Changes</Button>
+                </DialogFooter>
+              </form>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Week Controls */}
@@ -493,7 +634,16 @@ export default function Warehouse() {
                                 className="h-8 w-8"
                                 disabled={!canManage}
                                 onClick={() => {
-                                  // Edit functionality can be expanded
+                                  if (!canManage) {
+                                    toast({
+                                      title: 'Permission Denied',
+                                      description: "You don't have permission to edit items. Contact your manager for access.",
+                                      variant: 'destructive',
+                                    });
+                                    return;
+                                  }
+                                  setEditingItem({ ...item });
+                                  setEditDialogOpen(true);
                                 }}
                               >
                                 <Pencil className="h-4 w-4" />
